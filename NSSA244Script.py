@@ -12,6 +12,7 @@ class VBoxManager:
             "6":"Delete a VM",
             "7":"End the program"
         }
+        self.sessions = {}
         self.main()
     
     def prompt(self): 
@@ -39,8 +40,7 @@ class VBoxManager:
                 session = virtualbox.Session()
                 progress = self.vbox.machines[int(machine) - 1].launch_vm_process(session, 'gui', [])
                 progress.wait_for_completion()
-                print(dir(session))
-                session.close()
+                self.sessions[machine] = session
             else:
                 print("[-] Machines Index does not exists")
         else:
@@ -49,19 +49,19 @@ class VBoxManager:
     def stop_machine(self):
         self.list_machines()
         print()
-        machine = input("Select which VM to start: ")
-        if machine.isnumeric():
-            if int(machine) <= len(self.vbox.machines):
-                machine = self.vbox.machines[int(machine) - 1]
+        option = input("Select which VM to start: ")
+        if option.isnumeric():
+            if int(option) <= len(self.vbox.machines):
+                machine = self.vbox.machines[int(option) - 1]
                 if machine.state in (machine.state.powered_off, machine.state.paused):
                     print(f"[+] {machine.name} is already off")
                     return
                 else:
-                    session = virtualbox.Session()
-                    progress = machine.launch_vm_process(session, "gui", [])
-                    progress.wait_for_completion()
-                    session.console.power_down()
-                    session.close()
+                    if option in self.sessions:
+                        session = self.sessions[option]
+                        session.console.power_down()
+                    else:
+                        print('[-] Session does not already exist, cannot turn {machine.name} off')
         else:
             print('[-] Invalid Selection')
     
