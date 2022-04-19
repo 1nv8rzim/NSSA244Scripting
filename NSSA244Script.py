@@ -1,26 +1,25 @@
-import virtualbox
+from os import popen
 
 class VBoxManager:
     def __init__(self):
-        self.vbox = virtualbox.VirtualBox()
         self.options = {
             "1":"Create a VM",
             "2":"List all available VMs",
             "3":"Start a VM",
             "4":"Stop a VM",
-            "5":"List Setting of a VM",
+            "5":"List Settings of a VM",
             "6":"Delete a VM",
             "7":"End the program"
         }
-        self.sessions = {}
+        self.vms = []
         self.main()
     
     def prompt(self): 
         print("Options:")
-        print("========================")
+        print("==========================")
         for key, value in self.options.items():
             print(f'{key} {value}')
-        print("========================")
+        print("==========================")
         selection = input()
         print()
         if selection in ("1", "2", "3", "4", "5", "6", "7"):
@@ -28,42 +27,71 @@ class VBoxManager:
         return False
     
     def list_machines(self):
-        for i, machines in enumerate(self.vbox.machines):
-            print(f'[{i + 1}] {machines.name}')
+        self.vms = []
+        for i, vm in enumerate(popen('vboxmanage list vms')):
+            vm = vm.strip()
+            self.vms.append(vm.split(' {')[0])
+            print(f'[{i + 1}] {vm}')
+        
     
     def start_machine(self):
         self.list_machines()
-        print()
-        machine = input("Select which VM to start: ")
-        if machine.isnumeric():
-            if int(machine) <= len(self.vbox.machines):
-                session = virtualbox.Session()
-                progress = self.vbox.machines[int(machine) - 1].launch_vm_process(session, 'gui', [])
-                progress.wait_for_completion()
-                self.sessions[machine] = session
+        print("==========================")
+        choice = input("Enter VM to start: ")
+        if choice.isnumeric():
+            choice = int(choice) - 1
+            if choice < len(self.vms):
+                print(popen(f'vboxmanage startvm {self.vms[choice]} --type gui').read())
             else:
-                print("[-] Machines Index does not exists")
+                print('Out of index for vms')
         else:
-            print("[-] Invalid Selection")
+            print('Invalid choice for machine')
+
     
     def stop_machine(self):
         self.list_machines()
-        print()
-        option = input("Select which VM to start: ")
-        if option.isnumeric():
-            if int(option) <= len(self.vbox.machines):
-                machine = self.vbox.machines[int(option) - 1]
-                if machine.state in (machine.state.powered_off, machine.state.paused):
-                    print(f"[+] {machine.name} is already off")
-                    return
-                else:
-                    if option in self.sessions:
-                        session = self.sessions[option]
-                        session.console.power_down()
-                    else:
-                        print('[-] Session does not already exist, cannot turn {machine.name} off')
+        print("==========================")
+        choice = input("Enter VM to start: ")
+        if choice.isnumeric():
+            choice = int(choice) - 1
+            if choice < len(self.vms):
+                print(popen(f'vboxmanage controlvm {self.vms[choice]} poweroff --type gui').read())
+            else:
+                print('Out of index for vms')
         else:
-            print('[-] Invalid Selection')
+            print('Invalid choice for machine')
+    
+    def create_vm(self):
+        name = input('Name of VM: ')
+        OStype = input('OStype [Debian]: ')
+        if OStype.strip() == '': OStype = 'Debian'
+        print(popen(f'vboxmanage createvm --name "{name}" --ostype "{OStype}" --register').read())
+    
+    def list_vm_settings(self):
+        self.list_machines()
+        print("==========================")
+        choice = input("Enter VM to get info about: ")
+        if choice.isnumeric():
+            choice = int(choice) - 1
+            if choice < len(self.vms):
+                print(popen(f'vboxmanage showvminfo "{self.vms[choice]}"').read())
+            else:
+                print('Out of index for vms')
+        else:
+            print('Invalid choice for machine')
+    
+    def delete_vm(self):
+        self.list_machines()
+        print("==========================")
+        choice = input("Enter VM to delete: ")
+        if choice.isnumeric():
+            choice = int(choice) - 1
+            if choice < len(self.vms):
+                print(popen(f'vboxmanage unregistervm --delete "{self.vms[choice]}"').read())
+            else:
+                print('Out of index for vms')
+        else:
+            print('Invalid choice for machine')
     
     def main(self):
         while True:
@@ -71,7 +99,7 @@ class VBoxManager:
             print(f'[{selection}] {self.options[selection]}')
             print("========================")
             if selection == "1":
-                pass
+                self.create_vm()
             elif selection == "2":
                 self.list_machines()
             elif selection == "3":
@@ -79,9 +107,9 @@ class VBoxManager:
             elif selection == "4":
                 self.stop_machine()
             elif selection == "5":
-                pass
+                self.list_vm_settings()
             elif selection == "6":
-                pass
+                self.delete_vm()
             elif selection == "7":
                 break 
             else:
