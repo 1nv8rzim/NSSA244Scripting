@@ -2,6 +2,8 @@ from os import popen
 
 class VBoxManager:
     def __init__(self):
+        """Initialize all variables for VBoxManager 
+        """
         self.options = {
             "1":"Create a VM",
             "2":"List all available VMs",
@@ -15,6 +17,11 @@ class VBoxManager:
         self.main()
     
     def prompt(self): 
+        """Initial Prompt for new selections
+
+        Returns:
+            Union[str|bool]: selection or False if user gives invalid selection
+        """
         print("Options:")
         print("==========================")
         for key, value in self.options.items():
@@ -27,6 +34,8 @@ class VBoxManager:
         return False
     
     def list_machines(self):
+        """Lists all current machines
+        """
         self.vms = []
         for i, vm in enumerate(popen('vboxmanage list vms')):
             vm = vm.strip()
@@ -35,6 +44,8 @@ class VBoxManager:
         
     
     def start_machine(self):
+        """Starts a given machines
+        """
         self.list_machines()
         print("==========================")
         choice = input("Enter VM to start: ")
@@ -49,6 +60,8 @@ class VBoxManager:
 
     
     def stop_machine(self):
+        """Stops a given machine
+        """
         self.list_machines()
         print("==========================")
         choice = input("Enter VM to start: ")
@@ -62,38 +75,46 @@ class VBoxManager:
             print('Invalid choice for machine')
     
     def create_vm(self):
+        """Create VM and prompts for info to build it
+        """
         name = input('Name of VM: ')
         OStype = input('OStype [Debian]: ')
         if OStype.strip() == '': OStype = 'Debian'
         print(popen(f'vboxmanage createvm --name "{name}" --ostype "{OStype}" --register').read())
     
     def list_vm_settings(self):
+        """Lists settings of a given vm
+        """
         self.list_machines()
         print("==========================")
         choice = input("Enter VM to get info about: ")
         if choice.isnumeric():
             choice = int(choice) - 1
             if choice < len(self.vms):
-                print(popen(f'vboxmanage showvminfo "{self.vms[choice]}"').read())
+                print(popen(f'vboxmanage showvminfo {self.vms[choice]}').read())
             else:
                 print('Out of index for vms')
         else:
             print('Invalid choice for machine')
     
     def delete_vm(self):
+        """Deletes a given VM
+        """
         self.list_machines()
         print("==========================")
         choice = input("Enter VM to delete: ")
         if choice.isnumeric():
             choice = int(choice) - 1
             if choice < len(self.vms):
-                print(popen(f'vboxmanage unregistervm --delete "{self.vms[choice]}"').read())
+                print(popen(f'vboxmanage unregistervm {self.vms[choice]} --delete').read())
             else:
                 print('Out of index for vms')
         else:
             print('Invalid choice for machine')
     
     def main(self):
+        """Main function that runs for VBoxManage object
+        """
         while True:
             selection = self.prompt()
             print(f'[{selection}] {self.options[selection]}')
@@ -116,4 +137,5 @@ class VBoxManager:
                 print("[-] Invalid Response")
             print()
 
+#Invokes a new VBoxManager object
 VBoxManager()
