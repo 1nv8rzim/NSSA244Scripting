@@ -1,3 +1,10 @@
+"""
+Maxwell Fusco
+April 21st, 2022
+NSSA 244
+Spring 2022
+"""
+
 from os import popen
 
 class VBoxManager:
@@ -139,3 +146,8 @@ class VBoxManager:
 
 #Invokes a new VBoxManager object
 VBoxManager()
+
+"""
+Sources:
+vboxmanage --help
+"""
